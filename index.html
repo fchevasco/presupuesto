@@ -1,1 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Presupuesto Personal 2024–2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
 
+  :root {
+    --bg: #0f0f11;
+    --bg2: #18181c;
+    --bg3: #222228;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0efec;
+    --text2: #9a9898;
+    --text3: #5e5d5d;
+    --green: #22c987;
+    --green2: #0f7a50;
+    --red: #f05252;
+    --red2: #7a2020;
+    --blue: #4f9cf9;
+    --amber: #f5a623;
+    --purple: #9b72f5;
+    --teal: #2ec4b6;
+    --coral: #e8593c;
+    --pink: #e879a0;
+    --grid: rgba(255,255,255,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    padding: 2rem 1.25rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .header h1 { font-size: clamp(1.3rem, 5vw, 1.8rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .badge { font-size: 11px; font-family: 'DM Mono', monospace; background: var(--bg3); border: 1px solid var(--border2); color: var(--text2); padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+  .container { padding: 1.25rem; max-width: 900px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text3);
+    margin: 1.75rem 0 0.75rem;
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (min-width: 500px) { .metric-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 700px) { .metric-grid { grid-template-columns: repeat(6, 1fr); } }
+
+  .metric {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+  }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; line-height: 1.3; }
+  .metric-value { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; }
+  .metric-sub { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--text3); margin-top: 4px; }
+  .metric-value.pos { color: var(--green); }
+  .metric-value.neg { color: var(--red); }
+  .metric-value.blue { color: var(--blue); }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text2);
+    cursor: pointer; padding: 3px 8px;
+    border-radius: 6px; border: 1px solid transparent;
+    transition: all 0.15s; user-select: none;
+  }
+  .legend-item:hover { border-color: var(--border2); background: var(--bg3); }
+  .legend-item.hidden { opacity: 0.3; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-wrap { position: relative; width: 100%; }
+
+  .tab-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab {
+    font-size: 12px; padding: 5px 13px;
+    border-radius: 20px; border: 1px solid var(--border2);
+    background: transparent; color: var(--text2);
+    cursor: pointer; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active { background: var(--bg3); color: var(--text); border-color: var(--border2); font-weight: 500; }
+
+  .bars-section { }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bar-label { font-size: 11px; color: var(--text2); width: 85px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; background: var(--bg3); border-radius: 4px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 7px; transition: width 0.4s ease; }
+  .bar-val { font-size: 10px; font-family: 'DM Mono', monospace; color: rgba(255,255,255,0.9); font-weight: 500; }
+
+  .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 480px) { .insight-grid { grid-template-columns: 1fr; } }
+  .insight {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem;
+  }
+  .insight-icon { font-size: 1.2rem; margin-bottom: 6px; }
+  .insight-text { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  .insight-text strong { color: var(--text); font-weight: 500; }
+
+  .note { font-size: 11px; color: var(--text3); margin-top: 8px; font-style: italic; }
+
+  .footer {
+    text-align: center; padding: 2rem 1.25rem;
+    font-size: 11px; color: var(--text3);
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+  .footer span { font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Presupuesto Personal</h1>
+      <p>Análisis financiero · Jun 2024 – Mar 2026</p>
+    </div>
+    <span class="badge">939 transacciones</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-label">Resumen general</div>
+  <div class="metric-grid">
+    <div class="metric">
+      <div class="metric-label">Ingreso promedio mensual</div>
+      <div class="metric-value blue">$1,419</div>
+      <div class="metric-sub">21 meses completos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Gasto promedio mensual</div>
+      <div class="metric-value">$905</div>
+      <div class="metric-sub">Egresos reales</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Ahorro neto acumulado</div>
+      <div class="metric-value pos">$11,286</div>
+      <div class="metric-sub">Jun 24 – Mar 26</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Tasa de ahorro media</div>
+      <div class="metric-value pos">34%</div>
+      <div class="metric-sub">Sobre ingresos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Mayor gasto fijo</div>
+      <div class="metric-value neg">Casa</div>
+      <div class="metric-sub">$422/mes prom.</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Mejor mes ahorro</div>
+      <div class="metric-value pos">Abr 25</div>
+      <div class="metric-sub">51% tasa ahorro</div>
+    </div>
+  </div>
+
+  <div class="section-label">Ingresos vs. Egresos mensuales</div>
+  <div class="card">
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#22c987"></span>Ingresos</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f05252"></span>Egresos</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#4f9cf9; opacity:0.7"></span>Balance</span>
+    </div>
+    <div class="chart-wrap" style="height:250px"><canvas id="c1"></canvas></div>
+  </div>
+
+  <div class="section-label">Gastos por categoría a través de los meses</div>
+  <div class="card">
+    <div class="legend" id="leg-lines"></div>
+    <div class="chart-wrap" style="height:270px"><canvas id="c_lines"></canvas></div>
+    <p class="note">Toca una categoría para mostrar/ocultar su línea.</p>
+  </div>
+
+  <div class="section-label">Distribución de gastos (2025–2026)</div>
+  <div class="card">
+    <div class="tab-row">
+      <button class="tab active" onclick="switchCat('2025',this)">2025–2026</button>
+      <button class="tab" onclick="switchCat('all',this)">Todo el período</button>
+    </div>
+    <div class="chart-wrap" style="height:280px"><canvas id="c2"></canvas></div>
+  </div>
+
+  <div class="section-label">Tasa de ahorro mensual</div>
+  <div class="card">
+    <div class="chart-wrap" style="height:180px"><canvas id="c3"></canvas></div>
+  </div>
+
+  <div class="section-label">Promedio mensual por categoría (2025–2026)</div>
+  <div class="card">
+    <div class="bars-section" id="bars-cat"></div>
+  </div>
+
+  <div class="section-label">Comparativo enero–marzo: 2025 vs 2026</div>
+  <div class="card">
+    <div class="tab-row">
+      <button class="tab active" onclick="switchComp('grouped',this)">Agrupado</button>
+      <button class="tab" onclick="switchComp('ing',this)">Solo ingresos</button>
+      <button class="tab" onclick="switchComp('gas',this)">Solo egresos</button>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#22c987"></span>Ingresos 2025</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#5DCAA5; opacity:0.8"></span>Ingresos 2026</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f05252"></span>Egresos 2025</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f09595"></span>Egresos 2026</span>
+    </div>
+    <div class="chart-wrap" style="height:240px"><canvas id="c_comp"></canvas></div>
+    <p class="note">Marzo 2026 aún no ha cerrado (datos al 13/03). Los ingresos de ese mes están incompletos.</p>
+  </div>
+
+  <div class="section-label">Gastos por cuenta de pago</div>
+  <div class="card">
+    <div class="chart-wrap" style="height:200px"><canvas id="c4"></canvas></div>
+  </div>
+
+  <div class="section-label">Insights del coach financiero</div>
+  <div class="insight-grid">
+    <div class="insight">
+      <div class="insight-icon">🏠</div>
+      <div class="insight-text"><strong>La vivienda consume el 47% del gasto.</strong> La renta de $400 más servicios supera el umbral recomendado del 30%. Considera renegociar o buscar alternativas.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">✈️</div>
+      <div class="insight-text"><strong>Inversión Australia: $1,106 acumulados.</strong> TOEFL, asesoría, visa y exámenes. Una apuesta de largo plazo bien ejecutada y consistente.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">🍽️</div>
+      <div class="insight-text"><strong>Comida + Almuerzo = $207/mes.</strong> Es el segundo mayor gasto. Reducir un 20% representaría $41 adicionales mensuales de ahorro.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">⚠️</div>
+      <div class="insight-text"><strong>Feb 2026: solo $58 de ahorro.</strong> El anillo de promesa ($330) y el Airbnb Cuenca ($103) casi eliminaron el margen ese mes.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">📈</div>
+      <div class="insight-text"><strong>Mejor mes: Abril 2025 (51% ahorro).</strong> Utilidades ($829) + salario normal. Los bonos son oportunidad de ahorro acelerado.</div>
+    </div>
+    <div class="insight">
+      <div class="insight-icon">🚗</div>
+      <div class="insight-text"><strong>Auto: $64/mes promedio.</strong> Mayo 2025 fue la excepción ($563) con seguro + revisión vehicular. Conviene un fondo para imprevistos de $500.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Generado con Claude · <span>Datos: Jun 2024 – Mar 2026</span>
+</div>
+
+<script>
+const months = ['Jun 24','Jul 24','Ago 24','Sep 24','Oct 24','Nov 24','Dic 24','Ene 25','Feb 25','Mar 25','Abr 25','May 25','Jun 25','Jul 25','Ago 25','Sep 25','Oct 25','Nov 25','Dic 25','Ene 26','Feb 26','Mar 26'];
+const ingresos = [2227,1087,1303,1040,1490,1075,1074,1157,1166,1668,2175,1516,1472,896,1041,1447,1557,1579,1579,1568,1505,375];
+const egresos  = [372,843,761,543,769,750,799,849,952,889,1056,1581,952,944,874,936,780,1143,1107,942,1446,1017];
+const balances = ingresos.map((v,i)=>v-egresos[i]);
+const tasas    = ingresos.map((v,i)=>parseFloat(((v-egresos[i])/v*100).toFixed(1)));
+
+const gridC = 'rgba(255,255,255,0.05)';
+const textC = '#6b6a6a';
+Chart.defaults.color = textC;
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+const baseScale = {
+  x:{grid:{color:gridC},ticks:{font:{size:10},color:textC,maxRotation:45,autoSkip:true,maxTicksLimit:11}},
+  y:{grid:{color:gridC},ticks:{font:{size:10},color:textC,callback:v=>'$'+v.toLocaleString()}}
+};
+
+// Chart 1 - Ingresos vs Egresos
+new Chart(document.getElementById('c1'),{
+  type:'bar',
+  data:{
+    labels:months,
+    datasets:[
+      {label:'Ingresos',data:ingresos,backgroundColor:'rgba(34,201,135,0.75)',borderRadius:3,order:2},
+      {label:'Egresos', data:egresos, backgroundColor:'rgba(240,82,82,0.7)',  borderRadius:3,order:2},
+      {label:'Balance', data:balances,type:'line',borderColor:'rgba(79,156,249,0.85)',backgroundColor:'rgba(79,156,249,0.08)',tension:0.3,pointRadius:2,fill:true,order:1}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`}}},
+    scales:baseScale
+  }
+});
+
+// Chart lines - by category
+const catData = {
+  'Casa':    [55,494,457,249,455,459,430,421,458,440,454,478,468,447,426,430,57,648,541,510,528,19],
+  'Comida':  [75,88,38,156,43,39,70,57,71,138,152,195,109,76,108,213,112,208,99,105,146,63],
+  'Almuerzo':[49,34,69,42,71,58,37,73,37,61,7,42,45,74,73,109,123,123,148,129,142,60],
+  'Inversión':[2,0,0,0,0,20,4,91,176,0,265,0,178,0,31,0,6,0,0,0,0,705],
+  'Ocio':    [58,9,42,15,86,6,48,117,151,103,113,6,35,100,46,7,160,36,7,72,132,15],
+  'Auto':    [57,45,57,26,13,91,35,33,10,19,22,563,46,40,62,47,3,23,40,3,20,23],
+  'Regalo':  [0,14,0,15,50,0,100,5,20,57,0,27,10,50,0,53,25,50,77,17,334,0],
+  'Préstamo':[20,98,0,14,1,50,11,0,1,12,8,190,0,0,0,0,20,25,100,65,0,92]
+};
+const catColors=['#4f9cf9','#f05252','#22c987','#f5a623','#9b72f5','#e8593c','#e879a0','#2ec4b6'];
+const catNames=Object.keys(catData);
+
+const lineDatasets=catNames.map((cat,i)=>({
+  label:cat,data:catData[cat],
+  borderColor:catColors[i],backgroundColor:catColors[i]+'20',
+  tension:0.35,pointRadius:2,pointHoverRadius:5,
+  borderWidth:2,fill:false
+}));
+
+const lineChart=new Chart(document.getElementById('c_lines'),{
+  type:'line',
+  data:{labels:months,datasets:lineDatasets},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`}}},
+    scales:baseScale
+  }
+});
+
+const leg=document.getElementById('leg-lines');
+catNames.forEach((cat,i)=>{
+  const el=document.createElement('span');
+  el.className='legend-item';
+  el.innerHTML=`<span class="legend-dot" style="background:${catColors[i]}"></span>${cat}`;
+  el.onclick=()=>{
+    const meta=lineChart.getDatasetMeta(i);
+    meta.hidden=!meta.hidden;
+    el.classList.toggle('hidden',meta.hidden);
+    lineChart.update();
+  };
+  leg.appendChild(el);
+});
+
+// Chart 2 - Category distribution horizontal bar
+const catLabels2025=['Casa','Comida','Inversión','Almuerzo','Ocio','Auto','Regalo','Préstamo','Salud','Desayuno','Ride','Ropa'];
+const catVals2025=  [6326,1853,1451,1246,1101,955,725,513,423,403,225,212];
+const catLabelsAll= ['Casa','Comida','Almuerzo','Inversión','Ocio','Auto','Regalo','Préstamo','Desayuno','Salud','Ride','Ropa'];
+const catValsAll=   [8925,2362,1606,1477,1365,1280,904,707,645,454,301,212];
+const barColors=    ['#4f9cf9','#f05252','#f5a623','#22c987','#9b72f5','#e8593c','#e879a0','#2ec4b6','#f5a623','#22c987','#9b72f5','#6b6a6a'];
+
+let c2Chart=new Chart(document.getElementById('c2'),{
+  type:'bar',
+  data:{labels:catLabels2025,datasets:[{data:catVals2025,backgroundColor:barColors,borderRadius:4}]},
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` $${ctx.parsed.x.toLocaleString()}`}}},
+    scales:{
+      x:{grid:{color:gridC},ticks:{font:{size:10},color:textC,callback:v=>'$'+v.toLocaleString()}},
+      y:{grid:{display:false},ticks:{font:{size:11},color:textC}}
+    }
+  }
+});
+
+function switchCat(period,btn){
+  document.querySelectorAll('.tab-row .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(period==='2025'){c2Chart.data.labels=catLabels2025;c2Chart.data.datasets[0].data=catVals2025;}
+  else{c2Chart.data.labels=catLabelsAll;c2Chart.data.datasets[0].data=catValsAll;}
+  c2Chart.update();
+}
+
+// Chart 3 - Savings rate
+new Chart(document.getElementById('c3'),{
+  type:'line',
+  data:{
+    labels:months,
+    datasets:[{
+      data:tasas,
+      borderColor:'#22c987',
+      backgroundColor:'rgba(34,201,135,0.08)',
+      tension:0.3,fill:true,pointRadius:3,
+      pointBackgroundColor:tasas.map(v=>v<0?'#f05252':'#22c987'),
+      pointBorderColor:'transparent'
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toFixed(1)}%`}}},
+    scales:{
+      x:{grid:{color:gridC},ticks:{font:{size:10},color:textC,maxTicksLimit:11,maxRotation:45}},
+      y:{grid:{color:gridC},ticks:{font:{size:10},color:textC,callback:v=>v+'%'}}
+    }
+  }
+});
+
+// Bars avg
+const avgCats=[
+  {l:'Casa',v:422},{l:'Comida',v:124},{l:'Inversión',v:97},{l:'Almuerzo',v:83},
+  {l:'Ocio',v:73},{l:'Auto',v:64},{l:'Regalo',v:48},{l:'Préstamo',v:34},
+  {l:'Salud',v:28},{l:'Desayuno',v:27},{l:'Ride',v:15},{l:'Ropa',v:14}
+];
+const maxV=422;
+const barsEl=document.getElementById('bars-cat');
+barsEl.innerHTML=avgCats.map((c,i)=>`
+<div class="bar-row">
+  <div class="bar-label">${c.l}</div>
+  <div class="bar-track">
+    <div class="bar-fill" style="width:${Math.round(c.v/maxV*100)}%;background:${barColors[i]}">
+      <span class="bar-val">$${c.v}</span>
+    </div>
+  </div>
+</div>`).join('');
+
+// Chart 4 - Doughnut
+const cuentaLabels=['Banco Guayaquil','Mastercard','Cash','Diners','Banco Pichincha'];
+const cuentaVals=[12235,4943,2800,178,144];
+const cuentaColors=['#4f9cf9','#f05252','#f5a623','#9b72f5','#22c987'];
+new Chart(document.getElementById('c4'),{
+  type:'doughnut',
+  data:{labels:cuentaLabels,datasets:[{data:cuentaVals,backgroundColor:cuentaColors,borderWidth:0,hoverOffset:4}]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:true,position:'right',labels:{
+        font:{size:11},color:textC,boxWidth:10,padding:10,
+        generateLabels:(chart)=>{
+          return chart.data.labels.map((l,i)=>({
+            text:`${l}: $${cuentaVals[i].toLocaleString()}`,
+            fillStyle:cuentaColors[i],strokeStyle:'transparent',lineWidth:0
+          }));
+        }
+      }}
+    },
+    cutout:'65%'
+  }
+});
+
+// Chart comparativo 2025 vs 2026
+const compMonths=['Enero','Febrero','Marzo'];
+const compDatasets={
+  grouped:[
+    {label:'Ingresos 2025',data:[1157,1166,1668],backgroundColor:'rgba(34,201,135,0.85)',borderRadius:4},
+    {label:'Ingresos 2026',data:[1568,1505,375], backgroundColor:'rgba(93,202,165,0.7)', borderRadius:4},
+    {label:'Egresos 2025', data:[849,952,889],   backgroundColor:'rgba(240,82,82,0.85)', borderRadius:4},
+    {label:'Egresos 2026', data:[942,1446,1017], backgroundColor:'rgba(240,149,149,0.85)',borderRadius:4}
+  ],
+  ing:[
+    {label:'Ingresos 2025',data:[1157,1166,1668],backgroundColor:'rgba(34,201,135,0.85)',borderRadius:4},
+    {label:'Ingresos 2026',data:[1568,1505,375], backgroundColor:'rgba(93,202,165,0.7)', borderRadius:4}
+  ],
+  gas:[
+    {label:'Egresos 2025', data:[849,952,889],   backgroundColor:'rgba(240,82,82,0.85)', borderRadius:4},
+    {label:'Egresos 2026', data:[942,1446,1017], backgroundColor:'rgba(240,149,149,0.85)',borderRadius:4}
+  ]
+};
+
+let compChart=new Chart(document.getElementById('c_comp'),{
+  type:'bar',
+  data:{labels:compMonths,datasets:compDatasets.grouped},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`}}},
+    scales:{
+      x:{grid:{color:gridC},ticks:{font:{size:11},color:textC}},
+      y:{grid:{color:gridC},ticks:{font:{size:10},color:textC,callback:v=>'$'+v.toLocaleString()},min:0}
+    }
+  }
+});
+
+function switchComp(mode,btn){
+  document.querySelectorAll('.tab-row .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  compChart.data.datasets=compDatasets[mode];
+  compChart.update();
+}
+</script>
+</body>
+</html>
